@@ -1,0 +1,195 @@
+{% extends 'layouts/admin_layout.html' %}
+{% block content %}
+
+<div class="section-header">
+  <h2>📊 Reports Dashboard</h2>
+</div>
+
+<!-- Overview Cards -->
+<div class="row">
+  <div class="col-lg-3 col-md-6 col-sm-6 col-12">
+    <div class="card card-statistic-1">
+      <div class="card-icon bg-primary">
+        <i class="fas fa-users"></i>
+      </div>
+      <div class="card-wrap">
+        <div class="card-header">
+          <h4>Total Patients</h4>
+        </div>
+        <div class="card-body">
+          {{ total_patients }}
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-3 col-md-6 col-sm-6 col-12">
+    <div class="card card-statistic-1">
+      <div class="card-icon bg-danger">
+        <i class="fas fa-user-md"></i>
+      </div>
+      <div class="card-wrap">
+        <div class="card-header">
+          <h4>Total Doctors</h4>
+        </div>
+        <div class="card-body">
+          {{ total_doctors }}
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-3 col-md-6 col-sm-6 col-12">
+    <div class="card card-statistic-1">
+      <div class="card-icon bg-warning">
+        <i class="fas fa-door-open"></i>
+      </div>
+      <div class="card-wrap">
+        <div class="card-header">
+          <h4>Total Rooms</h4>
+        </div>
+        <div class="card-body">
+          {{ total_rooms }}
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-3 col-md-6 col-sm-6 col-12">
+    <div class="card card-statistic-1">
+      <div class="card-icon bg-success">
+        <i class="fas fa-calendar-check"></i>
+      </div>
+      <div class="card-wrap">
+        <div class="card-header">
+          <h4>Total Appointments</h4>
+        </div>
+        <div class="card-body">
+          {{ total_appointments }}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Billing Summary -->
+<div class="row">
+  <div class="col-lg-6 col-md-6 col-12">
+    <div class="card">
+      <div class="card-header">
+        <h4>Billing (Last 30 Days)</h4>
+      </div>
+      <div class="card-body">
+        <ul class="list-unstyled list-unstyled-border">
+          <li class="media">
+            <div class="media-body">
+              <div class="media-title">Total Revenue</div>
+              <div class="text-success">₹{{ total_revenue_last_30_days }}</div>
+            </div>
+          </li>
+          <li class="media">
+            <div class="media-body">
+              <div class="media-title">Bills Generated</div>
+              <div class="text-info">{{ bills_generated_last_30_days }}</div>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6 col-md-6 col-12">
+    <div class="card">
+      <div class="card-header">
+        <h4>Inventory Summary</h4>
+      </div>
+      <div class="card-body">
+        <ul class="list-unstyled list-unstyled-border">
+          <li class="media">
+            <div class="media-body">
+              <div class="media-title">Total Items</div>
+              <div class="text-primary">{{ inventory_summary.total_items }}</div>
+            </div>
+          </li>
+          <li class="media">
+            <div class="media-body">
+              <div class="media-title">Low Stock Items</div>
+              <div class="text-danger">{{ inventory_summary.low_stock_count }}</div>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- JavaScript for ApexCharts -->
+<script>
+  // Appointments by Date Chart
+  var appointmentsByDateOptions = {
+    series: [{
+      name: 'Appointments',
+      data: [{% for row in appointments_by_date_last_14_days %}{{ row.total_appointments }}{% if not loop.last %},{% endif %}{% endfor %}]
+    }],
+    chart: {
+      type: 'line',
+      height: 350,
+      toolbar: { show: false }
+    },
+    xaxis: {
+      categories: [{% for row in appointments_by_date_last_14_days %}'{{ row.date }}'{% if not loop.last %},{% endif %}{% endfor %}],
+      title: { text: 'Date' }
+    },
+    yaxis: {
+      title: { text: 'Number of Appointments' }
+    },
+    stroke: {
+      curve: 'smooth'
+    },
+    colors: ['#008FFB'],
+    grid: {
+      borderColor: '#f1f1f1'
+    }
+  };
+  var appointmentsByDateChart = new ApexCharts(document.querySelector("#appointmentsByDateChart"), appointmentsByDateOptions);
+  appointmentsByDateChart.render();
+
+  // Top Doctors Chart
+  var topDoctorsOptions = {
+    series: [{
+      name: 'Appointments',
+      data: [{% for d in top_doctors_last_30_days %}{{ d.total_appointments }}{% if not loop.last %},{% endif %}{% endfor %}]
+    }],
+    chart: {
+      type: 'bar',
+      height: 350,
+      toolbar: { show: false }
+    },
+    plotOptions: {
+      bar: {
+        horizontal: false,
+        columnWidth: '55%'
+      }
+    },
+    xaxis: {
+      categories: [{% for d in top_doctors_last_30_days %}'{{ d.doctor_name }}'{% if not loop.last %},{% endif %}{% endfor %}],
+      title: { text: 'Doctor' }
+    },
+    yaxis: {
+      title: { text: 'Number of Appointments' }
+    },
+    colors: ['#00E396'],
+    grid: {
+      borderColor: '#f1f1f1'
+    }
+  };
+  var topDoctorsChart = new ApexCharts(document.querySelector("#topDoctorsChart"), topDoctorsOptions);
+  topDoctorsChart.render();
+
+  // Initialize DataTable for Low Stock Items
+  $(document).ready(function() {
+    $('#lowStockTable').DataTable({
+      "pageLength": 5,
+      "lengthChange": false
+    });
+  });
+</script>
+
+{% endblock %}

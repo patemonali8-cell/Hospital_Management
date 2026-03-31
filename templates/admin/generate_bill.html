@@ -1,0 +1,100 @@
+{% extends 'layouts/admin_layout.html' %}
+{% block content %}
+
+<section class="section">
+  <div class="section-header">
+    <h1>Generate Bill for Admission #{{ admission.admission_id }}</h1>
+  </div>
+
+  <div class="section-body">
+    <div class="card">
+      <div class="card-header">
+        <h4>Bill Preview for {{ admission.patient_name }}</h4>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label>Patient Name</label>
+            <input type="text" class="form-control" value="{{ admission.patient_name }}" disabled>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label>Doctor</label>
+            <input type="text" class="form-control" value="Dr. {{ admission.doctor_name }}" disabled>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label>Check-In Date</label>
+            <input type="text" class="form-control" value="{{ admission.check_in_date }}" disabled>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label>Check-Out Date</label>
+            <input type="text" class="form-control" value="{{ admission.check_out_date or 'Ongoing' }}" disabled>
+          </div>
+          <div class="col-md-12 mb-3">
+            <h6>Charges Breakdown</h6>
+            <table class="table table-bordered">
+              <tr>
+                <td>Room Charges</td>
+                <td>₹{{ "%.2f" % room_charges }}</td>
+              </tr>
+              <tr>
+                <td>Doctor Fee</td>
+                <td>₹{{ "%.2f" % doctor_fee }}</td>
+              </tr>
+              <tr>
+                <td>Medicine Charges</td>
+                <td>₹{{ "%.2f" % medicine_charges }}</td>
+              </tr>
+              <tr>
+                <td><strong>Total Amount</strong></td>
+                <td><strong>₹{{ "%.2f" % total_amount }}</strong></td>
+              </tr>
+            </table>
+          </div>
+          <div class="col-md-12 mb-3">
+            <h6>Inventory Usage</h6>
+            <table class="table table-bordered">
+              <thead>
+                <tr>
+                  <th>Item Name</th>
+                  <th>Quantity Used</th>
+                  <th>Unit Price</th>
+                  <th>Subtotal</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% if inventory_usage %}
+                  {% for item in inventory_usage %}
+                  <tr>
+                    <td>{{ item.item_name }}</td>
+                    <td>{{ item.quantity_used }}</td>
+                    <td>₹{{ "%.2f" % item.unit_price }}</td>
+                    <td>₹{{ "%.2f" % (item.quantity_used * item.unit_price) }}</td>
+                  </tr>
+                  {% endfor %}
+                {% else %}
+                  <tr>
+                    <td colspan="4" class="text-center text-muted">No inventory usage recorded.</td>
+                  </tr>
+                {% endif %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <form method="POST" action="{{ url_for('admin.generate_bill', admission_id=admission.admission_id) }}">
+          <button type="submit" class="btn btn-success">Confirm and Generate Bill</button>
+          <a href="{{ url_for('admin.get_admissions') }}" class="btn btn-secondary">Cancel</a>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log('Generate Bill script loaded');
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,17 @@
+{% extends 'layouts/patient_layout.html' %} {% block content %}
+<section class="section">
+  <h1>Welcome, {{ user.full_name }}</h1>
+  <p>Email: {{ user.email }}</p>
+  <p>Role: {{ user.role }}</p>
+
+  <nav>
+    <ul>
+      <li>
+        <a href="{{ url_for('patient.appointments') }}">My Appointments</a>
+      </li>
+      <li><a href="{{ url_for('patient.bills') }}">My Bills</a></li>
+    </ul>
+  </nav>
+  <a href="{{ url_for('auth.logout') }}">Logout</a>
+</section>
+{% endblock %}

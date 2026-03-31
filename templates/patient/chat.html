@@ -1,0 +1,136 @@
+{% extends 'layouts/patient_layout.html' %}
+
+{% block content %}
+<section class="section">
+  <div class="section-body">
+    <div class="card shadow-lg" style="max-width:800px;margin:auto;border-radius:12px;">
+      <!-- Header -->
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h4 class="m-0">🤖 AI Chatbot</h4>
+        <button id="clear-chat" class="btn btn-danger btn-sm">
+          <i class="fas fa-trash-alt"></i> Clear
+        </button>
+      </div>
+
+      <!-- Chat Area -->
+      <div id="chat-box" class="card-body bg-light" 
+           style="height:420px; overflow-y:auto; border:1px solid #ddd; padding:15px; border-radius:8px;">
+        <!-- Messages will appear here -->
+        <div class="text-center text-muted">Start chatting with AI...</div>
+      </div>
+
+      <!-- Input Area -->
+      <div class="card-footer d-flex">
+        <input type="text" id="user-query" class="form-control" placeholder="Type your message..." autocomplete="off" />
+        <button id="send-btn" class="btn btn-primary ms-2">
+          <i class="fas fa-paper-plane"></i> Send
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Optional: Font Awesome for icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"/>
+
+<script>
+  // Utility: Render a chat message
+  function renderMessage(role, message) {
+    const chatBox = document.getElementById('chat-box');
+    const msgDiv = document.createElement('div');
+    msgDiv.classList.add('mb-3');
+
+    if (role === 'user') {
+      msgDiv.classList.add('text-end');
+      msgDiv.innerHTML = `
+        <div class="d-inline-block p-2 px-3 rounded bg-primary text-white" style="max-width:70%;">
+          <strong>You:</strong> ${message}
+        </div>
+      `;
+    } else {
+      msgDiv.classList.add('text-start');
+      msgDiv.innerHTML = `
+        <div class="d-inline-block p-2 px-3 rounded bg-success text-white" style="max-width:70%;">
+          <strong>AI:</strong> ${message}
+        </div>
+      `;
+    }
+
+    chatBox.appendChild(msgDiv);
+    chatBox.scrollTop = chatBox.scrollHeight;
+  }
+
+  // Load previous chat history
+  async function loadChatHistory() {
+    try {
+      const res = await fetch('{{ url_for("chat.get_chat_history_api") }}');
+      if (!res.ok) return;
+      const history = await res.json();
+      document.getElementById('chat-box').innerHTML = '';
+      history.forEach(msg => renderMessage(msg.role, msg.content));
+    } catch (err) {
+      console.error('Failed to load history:', err);
+    }
+  }
+
+  // Send user message to backend
+  async function sendMessage() {
+    const input = document.getElementById('user-query');
+    const userQuery = input.value.trim();
+    if (!userQuery) return;
+
+    renderMessage('user', userQuery);
+    input.value = '';
+
+    // Show temporary loading message
+    renderMessage('assistant', '💬 Thinking...');
+
+    try {
+      const res = await fetch('{{ url_for("chat.chat_api") }}', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ query: userQuery })
+      });
+
+      const data = await res.json();
+      // Remove the 'Thinking...' message
+      const chatBox = document.getElementById('chat-box');
+      chatBox.lastChild.remove();
+
+      if (res.ok && data.response) {
+        renderMessage('assistant', data.response);
+      } else {
+        renderMessage('assistant', '⚠️ ' + (data.error || 'Failed to get response.'));
+      }
+    } catch (err) {
+      console.error('Error:', err);
+      renderMessage('assistant', '⚠️ Network error. Please try again.');
+    }
+  }
+
+  // Clear chat
+  async function clearChat() {
+    if (!confirm('Are you sure you want to clear chat history?')) return;
+
+    const res = await fetch('{{ url_for("chat.clear_chat") }}', { method: 'POST' });
+    const data = await res.json();
+
+    if (res.ok) {
+      document.getElementById('chat-box').innerHTML = '<div class="text-center text-muted">Chat cleared.</div>';
+      alert(data.message);
+    } else {
+      alert(data.error || 'Failed to clear chat');
+    }
+  }
+
+  // Event Listeners
+  document.getElementById('send-btn').addEventListener('click', sendMessage);
+  document.getElementById('user-query').addEventListener('keypress', e => {
+    if (e.key === 'Enter') sendMessage();
+  });
+  document.getElementById('clear-chat').addEventListener('click', clearChat);
+
+  // Initialize
+  loadChatHistory();
+</script>
+{% endblock %}

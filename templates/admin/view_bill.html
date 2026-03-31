@@ -1,0 +1,69 @@
+{% extends 'layouts/admin_layout.html' %}
+{% block content %}
+
+<section class="section">
+  <div class="section-header d-flex justify-content-between align-items-center">
+    <h1>Bill for {{ bill.patient_name }}</h1>
+    <a href="{{ url_for('admin.download_bill', admission_id=bill.admission_id) }}" class="btn btn-primary">Download PDF</a>
+  </div>
+
+  <div class="section-body">
+    <div class="card">
+      <div class="card-header"><h4>Bill Details</h4></div>
+      <div class="card-body">
+
+        <h5>Bill ID: {{ bill.bill_id }} | Generated: {{ bill.generated_date.strftime('%Y-%m-%d %H:%M:%S') }}</h5>
+
+        <h6 class="mt-4">Patient & Admission Details</h6>
+        <table class="table table-bordered">
+          <tr><th>Patient Name</th><td>{{ bill.patient_name }}</td></tr>
+          <tr><th>Doctor</th><td>Dr. {{ bill.doctor_name }}</td></tr>
+          <tr><th>Room</th><td>{{ bill.room_no }}</td></tr>
+          <tr><th>Check-In Date</th><td>{{ bill.check_in_date }}</td></tr>
+          <tr><th>Check-Out Date</th><td>{{ bill.check_out_date or 'Ongoing' }}</td></tr>
+          <tr><th>Admission ID</th><td>{{ bill.admission_id }}</td></tr>
+        </table>
+
+        <h6 class="mt-4">Inventory Usage</h6>
+        <table class="table table-bordered">
+          <thead>
+            <tr>
+              <th>Item Name</th>
+              <th>Quantity Used</th>
+              <th>Unit Price</th>
+              <th>Subtotal</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% set inventory_total = 0 %}
+            {% if inventory_usage %}
+              {% for item in inventory_usage %}
+                {% set inventory_total = inventory_total + (item.quantity_used * item.unit_price) %}
+                <tr>
+                  <td>{{ item.item_name }}</td>
+                  <td>{{ item.quantity_used }}</td>
+                  <td>₹{{ "%.2f"|format(item.unit_price) }}</td>
+                  <td>₹{{ "%.2f"|format(item.quantity_used * item.unit_price) }}</td>
+                </tr>
+              {% endfor %}
+            {% else %}
+              <tr><td colspan="4" class="text-center">No inventory usage recorded.</td></tr>
+            {% endif %}
+          </tbody>
+        </table>
+
+        <h6 class="mt-4">Charges Breakdown</h6>
+        <table class="table table-bordered">
+          {% set total_amount = bill.room_charges + bill.doctor_fee + bill.medicine_charges %}
+          <tr><th>Room Charges</th><td>₹{{ "%.2f"|format(bill.room_charges) }}</td></tr>
+          <tr><th>Doctor Fee</th><td>₹{{ "%.2f"|format(bill.doctor_fee) }}</td></tr>
+          <tr><th>Inventory Charges</th><td>₹{{ "%.2f"|format(bill.medicine_charges) }}</td></tr>
+          <tr class="table-success"><th>Total Amount</th><td>₹{{ "%.2f"|format(total_amount) }}</td></tr>
+        </table>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+{% endblock %}
